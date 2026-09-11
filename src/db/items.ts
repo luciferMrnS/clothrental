@@ -54,50 +54,70 @@ function safeJsonParse<T>(raw: string, fallback: T): T {
 }
 
 export async function getAllItems(): Promise<Item[]> {
-  const rows = await db
-    .select()
-    .from(items)
-    .orderBy(desc(items.isFeatured), items.name);
-  return rows.map(toItem);
+  try {
+    const rows = await db
+      .select()
+      .from(items)
+      .orderBy(desc(items.isFeatured), items.name);
+    return rows.map(toItem);
+  } catch {
+    return [];
+  }
 }
 
 export async function getFeaturedItems(limit = 4): Promise<Item[]> {
-  const rows = await db
-    .select()
-    .from(items)
-    .where(eq(items.isFeatured, true))
-    .orderBy(items.name)
-    .limit(limit);
-  return rows.map(toItem);
+  try {
+    const rows = await db
+      .select()
+      .from(items)
+      .where(eq(items.isFeatured, true))
+      .orderBy(items.name)
+      .limit(limit);
+    return rows.map(toItem);
+  } catch {
+    return [];
+  }
 }
 
 export async function getItemBySlug(slug: string): Promise<Item | null> {
-  const rows = await db
-    .select()
-    .from(items)
-    .where(eq(items.slug, slug))
-    .limit(1);
-  return rows.length > 0 ? toItem(rows[0]) : null;
+  try {
+    const rows = await db
+      .select()
+      .from(items)
+      .where(eq(items.slug, slug))
+      .limit(1);
+    return rows.length > 0 ? toItem(rows[0]) : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getItemsByOccasion(occasion: string): Promise<Item[]> {
-  const rows = await db
-    .select()
-    .from(items)
-    .where(and(eq(items.isAvailable, true), like(items.occasions, `%${occasion}%`)))
-    .orderBy(desc(items.isFeatured), items.name);
-  return rows.map(toItem);
+  try {
+    const rows = await db
+      .select()
+      .from(items)
+      .where(and(eq(items.isAvailable, true), like(items.occasions, `%${occasion}%`)))
+      .orderBy(desc(items.isFeatured), items.name);
+    return rows.map(toItem);
+  } catch {
+    return [];
+  }
 }
 
 export async function getItemNameMap(
   ids: number[]
 ): Promise<Record<number, string>> {
   if (ids.length === 0) return {};
-  const rows = await db
-    .select({ id: items.id, name: items.name })
-    .from(items)
-    .where(inArray(items.id, distinctIds(ids)));
-  return Object.fromEntries(rows.map((r) => [r.id, r.name]));
+  try {
+    const rows = await db
+      .select({ id: items.id, name: items.name })
+      .from(items)
+      .where(inArray(items.id, distinctIds(ids)));
+    return Object.fromEntries(rows.map((r) => [r.id, r.name]));
+  } catch {
+    return {};
+  }
 }
 
 function distinctIds(ids: number[]): number[] {

@@ -38,18 +38,22 @@ export async function getOverlappingBookings(
   startDate: string,
   returnDate: string
 ): Promise<BookingRow[]> {
-  return db
-    .select()
-    .from(bookings)
-    .where(
-      and(
-        eq(bookings.itemId, itemId),
-        inArray(bookings.status, HOLDING_STATUSES),
-        lte(bookings.startDate, returnDate),
-        gte(bookings.returnDate, startDate)
+  try {
+    return await db
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.itemId, itemId),
+          inArray(bookings.status, HOLDING_STATUSES),
+          lte(bookings.startDate, returnDate),
+          gte(bookings.returnDate, startDate)
+        )
       )
-    )
-    .orderBy(asc(bookings.startDate));
+      .orderBy(asc(bookings.startDate));
+  } catch {
+    return [];
+  }
 }
 
 export async function createBooking(input: BookingInput): Promise<BookingRow> {
@@ -79,12 +83,16 @@ export async function createBooking(input: BookingInput): Promise<BookingRow> {
 export async function getBookingByReference(
   reference: string
 ): Promise<BookingRow | null> {
-  const rows = await db
-    .select()
-    .from(bookings)
-    .where(eq(bookings.reference, reference))
-    .limit(1);
-  return rows[0] ?? null;
+  try {
+    const rows = await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.reference, reference))
+      .limit(1);
+    return rows[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function markBookingConfirmed(
@@ -103,5 +111,9 @@ export async function deleteBookingByReference(
 }
 
 export async function getAllBookings(): Promise<BookingRow[]> {
-  return db.select().from(bookings).orderBy(asc(bookings.createdAt));
+  try {
+    return await db.select().from(bookings).orderBy(asc(bookings.createdAt));
+  } catch {
+    return [];
+  }
 }
