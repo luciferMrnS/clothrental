@@ -12,6 +12,9 @@ if (url.startsWith("file:")) {
   if (dir) mkdirSync(dir, { recursive: true });
 }
 
-export const client = createClient({ url });
+export const client = createClient({
+  url,
+  authToken: process.env.DATABASE_AUTH_TOKEN,
+});
 
 export const db = drizzle(client, { schema });
