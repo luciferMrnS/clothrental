@@ -1,8 +1,15 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  boolean,
+  index,
+  integer,
+  pgTable,
+  serial,
+  text,
+} from "drizzle-orm/pg-core";
 
-export const items = sqliteTable("items", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const items = pgTable("items", {
+  id: serial("id").primaryKey(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   description: text("description").notNull(),
@@ -14,15 +21,9 @@ export const items = sqliteTable("items", {
   images: text("images").notNull(),
   fit: text("fit").notNull(),
   careNotes: text("care_notes"),
-  isAvailable: integer("is_available", { mode: "boolean" })
-    .notNull()
-    .default(true),
-  isFeatured: integer("is_featured", { mode: "boolean" })
-    .notNull()
-    .default(false),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
+  isAvailable: boolean("is_available").notNull().default(true),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  createdAt: text("created_at").notNull().default(sql`(now())`),
 });
 
 export type ItemRow = typeof items.$inferSelect;
@@ -38,10 +39,10 @@ export const bookingStatus = [
 
 export type BookingStatus = (typeof bookingStatus)[number];
 
-export const bookings = sqliteTable(
+export const bookings = pgTable(
   "bookings",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     reference: text("reference").notNull().unique(),
     itemId: integer("item_id")
       .notNull()
@@ -64,7 +65,7 @@ export const bookings = sqliteTable(
     paymentReference: text("payment_reference"),
     createdAt: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`(now())`),
   },
   (table) => [
     index("bookings_item_status_idx").on(table.itemId, table.status),

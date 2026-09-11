@@ -1,12 +1,11 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
-import { migrate } from "drizzle-orm/libsql/migrator";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { db, client } from "../src/db";
 import { items } from "../src/db/schema";
 
-const DATA_DIR = path.resolve(process.cwd(), "data");
 const DRESSES_DIR = path.resolve(process.cwd(), "public", "dresses");
 
 const PALLETTE: Array<[string, string]> = [
@@ -174,13 +173,15 @@ function ensureDressImages(): string[] {
 }
 
 async function main() {
-  mkdirSync(DATA_DIR, { recursive: true });
-
-  const migrationClient = drizzle(
-    createClient({ url: process.env.DATABASE_URL ?? "file:./data/rental.db" })
-  );
-  await migrate(migrationClient, { migrationsFolder: path.join(process.cwd(), "drizzle") });
-  await migrationClient.$client.close();
+  const url =
+    process.env.DATABASE_URL ??
+    process.env.POSTGRES_URL ??
+    process.env.SUPABASE_DB_URL ??
+    "postgresql://postgres:postgres@localhost:5432/rental";
+  const migrationClient = postgres(url, { max: 1 });
+  const migrationDb = drizzle(migrationClient);
+  await migrate(migrationDb, { migrationsFolder: path.join(process.cwd(), "drizzle") });
+  await migrationClient.end();
 
   const images = ensureDressImages();
 
@@ -203,4 +204,4 @@ main()
     console.error(error);
     process.exit(1);
   })
-  .finally(() => client.close());
+  .finally(() => client.end({ timeout: 1 }));

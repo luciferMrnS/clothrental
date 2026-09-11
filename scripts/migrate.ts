@@ -1,27 +1,19 @@
-import { mkdirSync } from "node:fs";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 import path from "node:path";
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
-import { migrate } from "drizzle-orm/libsql/migrator";
 
 const url =
   process.env.DATABASE_URL ??
-  process.env.TURSO_DATABASE_URL ??
-  "file:./data/rental.db";
-const authToken =
-  process.env.DATABASE_AUTH_TOKEN ?? process.env.TURSO_AUTH_TOKEN;
-
-if (url.startsWith("file:")) {
-  const raw = url.slice("file:".length);
-  const dir = path.dirname(path.resolve(raw));
-  if (dir) mkdirSync(dir, { recursive: true });
-}
+  process.env.POSTGRES_URL ??
+  process.env.SUPABASE_DB_URL ??
+  "postgresql://postgres:postgres@localhost:5432/rental";
 
 async function main() {
-  const client = createClient({ url, authToken });
+  const client = postgres(url, { max: 1 });
   const db = drizzle(client);
   await migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
-  await client.close();
+  await client.end();
   console.log("Migrations applied.");
 }
 

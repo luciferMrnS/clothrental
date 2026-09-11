@@ -1,20 +1,13 @@
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
-import { mkdirSync } from "node:fs";
-import path from "node:path";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import * as schema from "./schema";
 
 const url =
-  process.env.DATABASE_URL ?? process.env.TURSO_DATABASE_URL ?? "file:./data/rental.db";
-const authToken =
-  process.env.DATABASE_AUTH_TOKEN ?? process.env.TURSO_AUTH_TOKEN;
+  process.env.DATABASE_URL ??
+  process.env.POSTGRES_URL ??
+  process.env.SUPABASE_DB_URL ??
+  "postgresql://postgres:postgres@localhost:5432/rental";
 
-if (url.startsWith("file:")) {
-  const raw = url.slice("file:".length);
-  const dir = path.dirname(path.resolve(raw));
-  if (dir) mkdirSync(dir, { recursive: true });
-}
-
-export const client = createClient({ url, authToken });
+export const client = postgres(url, { max: 1, prepare: false });
 
 export const db = drizzle(client, { schema });
