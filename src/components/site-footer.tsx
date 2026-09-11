@@ -42,6 +42,11 @@ export default function SiteFooter() {
           © {new Date().getFullYear()} {SITE_NAME}. Working title — final name
           to be confirmed.
         </p>
+        <p className="mt-1 text-center">
+          <a href="/admin" className="text-xs text-muted/60 hover:text-muted">
+            Owner area
+          </a>
+        </p>
       </div>
     </footer>
   );
